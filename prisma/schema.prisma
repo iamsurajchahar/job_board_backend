@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  userRoles    UserRole[]
+  companyRoles CompanyRole[]
+  createdAt    DateTime      @default(now())
+}
+
+/// Junction table for User–Role many-to-many
+model UserRole {
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  role       Role     @relation(fields: [roleId], references: [id])
+  roleId     Int
+  assignedAt DateTime @default(now())
+
+  @@id([userId, roleId])
+}
+
+/// Junction table for Company–Role many-to-many
+model CompanyRole {
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  Int
+  role       Role     @relation(fields: [roleId], references: [id])
+  roleId     Int
+  assignedAt DateTime @default(now())
+
+  @@id([companyId, roleId])
+}
+
+
+
+/// User model for job seekers
+model User {
+  id            Int              @id @default(autoincrement())
+  email         String           @unique
+  password      String
+  name          String
+  skills        String?          // Comma-separated skills
+  bio           String?
+  location      String?
+  isBanned      Boolean          @default(false)
+  userRoles     UserRole[]
+  profile       Profile?
+  subscription  UserSubscription?
+  bookmarks     Bookmark[]
+  applications  JobApplication[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+/// Company model for job posters (with built-in admin)
+model Company {
+  id          Int              @id @default(autoincrement())
+  email       String           @unique
+  password    String
+  name        String           @unique
+  website     String?
+  about       String?
+  industry    String?
+  logo        String?
+  isBanned    Boolean          @default(false)
+  companyRoles CompanyRole[]
+  profile     Profile?
+  subscription CompanySubscription?
+  jobs        Job[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+/// Optional profile data (generic JSON)
+model Profile {
+  id     Int   @id @default(autoincrement())
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?  @unique
+  company Company? @relation(fields: [companyId], references: [id])
+  companyId Int? @unique
+  data   Json?
+}
+
+/// Subscription plans
+model Plan {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique
+  description      String?
+  type             PlanType           @default(FREE)
+  userApplicationsLimit Int           @default(5)
+  companyJobsLimit Int                @default(1)
+  companyInternshipsLimit Int         @default(2)
+  price            Float              @default(0)
+  duration         Int                @default(30) // days
+  features         Json?              // Additional features as JSON
+  userSubscriptions UserSubscription[]
+  companySubscriptions CompanySubscription[]
+  createdAt        DateTime           @default(now())
+}
+
+enum PlanType {
+  FREE
+  PREMIUM
+}
+
+/// User subscriptions to plans
+model UserSubscription {
+  id        Int                @id @default(autoincrement())
+  user      User               @relation(fields: [userId], references: [id])
+  userId    Int                @unique
+  plan      Plan               @relation(fields: [planId], references: [id])
+  planId    Int
+  status    SubscriptionStatus @default(PENDING)
+  startDate DateTime           @default(now())
+  endDate   DateTime?
+  applicationsUsed Int         @default(0)
+  payments  Payment[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+/// Company subscriptions to plans
+model CompanySubscription {
+  id        Int                @id @default(autoincrement())
+  company   Company            @relation(fields: [companyId], references: [id])
+  companyId Int                @unique
+  plan      Plan               @relation(fields: [planId], references: [id])
+  planId    Int
+  status    SubscriptionStatus @default(PENDING)
+  startDate DateTime           @default(now())
+  endDate   DateTime?
+  jobsPosted Int               @default(0)
+  internshipsPosted Int        @default(0)
+  payments  Payment[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+/// Payment records for subscriptions
+model Payment {
+  id                    Int                @id @default(autoincrement())
+  userSubscription      UserSubscription?  @relation(fields: [userSubscriptionId], references: [id])
+  userSubscriptionId    Int?
+  companySubscription   CompanySubscription? @relation(fields: [companySubscriptionId], references: [id])
+  companySubscriptionId Int?
+  razorpayOrderId       String?            @unique
+  razorpayPaymentId     String?            @unique
+  provider              String             @default("razorpay")
+  amount                Float
+  currency              String             @default("INR")
+  status                PaymentStatus      @default(PENDING)
+  refund                Refund?
+  createdAt             DateTime           @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+/// Refunds linked one-to-one with Payment
+model Refund {
+  id        Int      @id @default(autoincrement())
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  paymentId Int      @unique
+  amount    Float
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+/// Job postings by companies
+model Job {
+  id           Int              @id @default(autoincrement())
+  title        String
+  description  String
+  location     String
+  salary       Int?
+  type         JobType
+  isRemoved    Boolean          @default(false)
+  company      Company          @relation(fields: [companyId], references: [id])
+  companyId    Int
+  applications JobApplication[]
+  bookmarks    Bookmark[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+enum JobType {
+  FULL_TIME
+  INTERNSHIP
+}
+
+/// Applications made by users to jobs
+model JobApplication {
+  id          Int               @id @default(autoincrement())
+  job         Job               @relation(fields: [jobId], references: [id])
+  jobId       Int
+  applicant   User              @relation(fields: [applicantId], references: [id])
+  applicantId Int
+  resume      String?           // URL to resume file
+  coverLetter String?
+  appliedAt   DateTime          @default(now())
+  status      ApplicationStatus @default(PENDING)
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  SHORTLISTED
+  INTERVIEWING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+/// Bookmarks for users to save jobs
+model Bookmark {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  job       Job      @relation(fields: [jobId], references: [id])
+  jobId     Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+} 

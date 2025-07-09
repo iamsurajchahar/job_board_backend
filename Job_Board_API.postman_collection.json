@@ -1,0 +1,644 @@
+{
+  "info": {
+    "name": "Job Board API",
+    "description": "Complete Postman collection for testing the Job Board API. Simplified structure: Users (job seekers) and Companies (job posters with built-in admin access).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "company_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"John Doe\",\n  \"skills\": \"JavaScript, React, Node.js\",\n  \"bio\": \"Full-stack developer with 3 years experience\",\n  \"location\": \"Mumbai, India\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register/user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register", "user"]
+            }
+          }
+        },
+        {
+          "name": "Register Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hr@company.com\",\n  \"password\": \"password123\",\n  \"name\": \"Tech Corp\",\n  \"website\": \"https://techcorp.com\",\n  \"about\": \"Leading technology company\",\n  \"industry\": \"Technology\",\n  \"logo\": \"https://example.com/logo.png\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register/company",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register", "company"]
+            },
+            "description": "Register a company. The company account automatically has admin privileges for job posting."
+          }
+        },
+
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set(\"user_token\", response.token);",
+                  "    console.log('User token set:', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"entityType\": \"User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set(\"company_token\", response.token);",
+                  "    console.log('Company token set:', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hr@company.com\",\n  \"password\": \"password123\",\n  \"entityType\": \"Company\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set(\"user_token\", \"\");",
+                  "    pm.environment.set(\"company_token\", \"\");",
+
+                  "    console.log('All tokens cleared');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "List All Jobs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/jobs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Details",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/jobs/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Developer\",\n  \"description\": \"We are looking for a senior developer with experience in React and Node.js\",\n  \"location\": \"Mumbai, India\",\n  \"salary\": 800000,\n  \"type\": \"FULL_TIME\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jobs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Create Internship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Frontend Intern\",\n  \"description\": \"Internship opportunity for frontend development\",\n  \"location\": \"Remote\",\n  \"salary\": 15000,\n  \"type\": \"INTERNSHIP\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jobs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Senior Developer\",\n  \"description\": \"Updated job description\",\n  \"location\": \"Delhi, India\",\n  \"salary\": 900000,\n  \"type\": \"FULL_TIME\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jobs/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/jobs/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Company Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/jobs/company/my-jobs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jobs", "company", "my-jobs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "item": [
+        {
+          "name": "Apply for Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resume\": \"https://example.com/resume.pdf\",\n  \"coverLetter\": \"I am excited to apply for this position and believe my skills match perfectly.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/applications/1/apply",
+              "host": ["{{base_url}}"],
+              "path": ["api", "applications", "1", "apply"]
+            }
+          }
+        },
+        {
+          "name": "Get My Applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/applications/my-applications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "applications", "my-applications"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/applications/job/1/applications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "applications", "job", "1", "applications"]
+            }
+          }
+        },
+        {
+          "name": "Update Application Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SHORTLISTED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/applications/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "applications", "1", "status"]
+            }
+          }
+        },
+        {
+          "name": "Withdraw Application",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/applications/1/withdraw",
+              "host": ["{{base_url}}"],
+              "path": ["api", "applications", "1", "withdraw"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookmarks",
+      "item": [
+        {
+          "name": "Bookmark Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bookmarks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookmarks", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get My Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bookmarks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookmarks"]
+            }
+          }
+        },
+        {
+          "name": "Check if Bookmarked",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bookmarks/1/check",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookmarks", "1", "check"]
+            }
+          }
+        },
+        {
+          "name": "Remove Bookmark",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bookmarks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookmarks", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Get Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "plans"]
+            }
+          }
+        },
+        {
+          "name": "Get User Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/user/my-subscription",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "user", "my-subscription"]
+            }
+          }
+        },
+        {
+          "name": "Get Company Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/company/my-subscription",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "company", "my-subscription"]
+            }
+          }
+        },
+        {
+          "name": "Subscribe User to Premium",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/user/subscribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "user", "subscribe"]
+            }
+          }
+        },
+        {
+          "name": "Subscribe Company to Premium",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/company/subscribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "company", "subscribe"]
+            }
+          }
+        },
+        {
+          "name": "Get User Usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/user/usage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "user", "usage"]
+            }
+          }
+        },
+        {
+          "name": "Get Company Usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{company_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/company/usage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subscriptions", "company", "usage"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 

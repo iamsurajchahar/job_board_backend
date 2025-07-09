@@ -1,0 +1,50 @@
+{
+  "name": "job-board-api",
+  "version": "1.0.0",
+  "description": "A full-featured job board API with user roles, job applications, and freemium model",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset",
+    "db:seed": "tsx src/seed.ts",
+    "db:studio": "prisma studio",
+    "test:api": "node test-api.js"
+  },
+  "keywords": [
+    "job-board",
+    "api",
+    "hono",
+    "prisma",
+    "postgresql",
+    "typescript",
+    "razorpay"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.8.2",
+    "@prisma/client": "^5.10.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
+    "hono": "^4.0.5",
+    "jose": "^5.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "razorpay": "^2.9.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^20.11.19",
+    "axios": "^1.6.0",
+    "dotenv": "^16.4.5",
+    "prisma": "^5.10.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
